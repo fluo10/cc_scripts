@@ -77,19 +77,30 @@ local function tryDigDown()
 end
 
 local function tryPlace()
-
+    while !turtle.detect() do
+        if !turtle.place() then
+            return false
+        end
+    end
+    return true
 end
 
 local function tryPlaceUp()
+    while !turtle.detectUp() do
+        if !turtle.placeUp() then
+            return false
+        end
+    end
+    return true
 end
 
 local function tryPlaceDown()
-end
-
-local function tryMoveDiagnally(is_returning)
-    for x = 1, width, do
-        local isUpping = 
-
+    while !turtle.detectDown() do
+        if !turtle.placeDown() then
+            return false
+        end
+    end
+    return true
 end
 
 local function refuel()
@@ -169,53 +180,88 @@ local function tryForward()
     return true
 end
 
-local function tryColumnUp()
-end
+local x = 1;
+local y = 1;
+local z = 1;
+local i = 1
+local j = 1;
+local baseX = 1
+local baseY = 1
 
-local function tryColumnDown()
+local function isReverse()
+  return (x%2) == 1
 end
 
 print("Tunnelling...")
 
-for n = 1, length do
-    tryForward()
+local function tryPlaceShields()
+  if x == 1 then
+    turtle.turnLeft()
+    tryPlace()
+    turtle.turnRight()
+  else if x == width then
+    turtle.turnRight()
+    truPlace()
+    turtle.turnLeft()
+  end
 
-    for x = 1, width do
-        for y = 1, height do
-
-for n = 1, length do
-    tryForward()
-
-    if n < length then
-        tryDig()
-        if not tryForward() then
-            print("Aborting Tunnel.")
-            break
-        end
-    else
-        print("Tunnel complete.")
-    end
-
-    
-
+  if y == 1 then
+    tryPlaceDown()
+  else if y == height then
+    tryPlaceUp()
+  end
 end
 
---[[
-print( "Returning to start..." )
 
--- Return to where we started
-turtle.turnLeft()
-turtle.turnLeft()
-while depth > 0 do
-    if turtle.forward() then
-        depth = depth - 1
-    else
-        turtle.dig()
-    end
+local function tryMoveNextCell()
+  if baseX == 1 then
+    turtle.turnRight()
+    tryForward()
+    turtle.turnLeft()
+    x = x + 1
+  else if baseX == width then
+    turtle.turnLeft()
+    tryForward()
+    turtle.turnRight()
+    x = x -1
+  else
+    print("Error wrong baseX")
+  end 
 end
-turtle.turnRight()
-turtle.turnRight()
-]]
+
+local function tryMoveNextRow()
+  if baseY == 1 then
+    tryUp()
+    y = y + 1
+  else if baseY == height then
+    tryDown()
+    y = y - 1
+  else
+    print("Error wrong baseY")
+  end
+end
+
+
+local function tryMoveNext()
+  local j = i % (width * height)
+  if j == 0 then
+    tryForward()
+    z = z + 1
+    baseX = x
+    baseY = y
+  else if j % width == 0 then
+    tryMoveNextRow()
+    baseX = x
+  else
+    tryMoveNextCell()
+  end
+end
+
+while z < length do
+  tryPlaceShields()
+  tryMoveNext()
+  i = i + 1
+end
 
 print("Tunnel complete.")
 print("Mined " .. collected .. " items total.")
