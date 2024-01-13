@@ -12,6 +12,28 @@ end
 
 local material = tostring(tArgs[1])
 
+local function trySelectMaterial()
+    local selectedItem = turtle.getItemDetail()
+    if selectedItem ~= nil and selectedItem["name"] == material then
+        return true
+    else
+        for i = 1, 12 do
+            selectedItem = turtle.getItemDetail(i)
+            if selectedItem ~= nil and selectedItem["name"] == material then
+                turtle.select(i)
+                print("Select slot: " .. tostring(i))
+                return true
+            end
+        end
+    end
+    print("Material not found")
+    return false
+end
+
+if not trySelectMaterial() then
+    return
+end
+
 local width = tonumber(tArgs[2])
 if width < 1 then
     print("Tunnel width must be positive")
@@ -23,12 +45,13 @@ if height < 1 then
     print("Tunnel height must be positive")
     return
 end
-local length = 0;
+local length = 128;
 if #tArgs == 4 then
-    length = tonumber(tArgs[1])
+    length = tonumber(tArgs[4])
     if length < 1 then
-    print("Tunnel length must be positive")
-    return
+        print("Tunnel length must be positive")
+        return
+    end
 end
 
 local collected = 0
@@ -44,7 +67,7 @@ local function tryDig()
     while turtle.detect() do
         if turtle.dig() then
             collect()
-            sleep(0.5)
+            sleep(0.1)
         else
             return false
         end
@@ -56,7 +79,7 @@ local function tryDigUp()
     while turtle.detectUp() do
         if turtle.digUp() then
             collect()
-            sleep(0.5)
+            sleep(0.1)
         else
             return false
         end
@@ -68,7 +91,7 @@ local function tryDigDown()
     while turtle.detectDown() do
         if turtle.digDown() then
             collect()
-            sleep(0.5)
+            sleep(0.1)
         else
             return false
         end
@@ -77,30 +100,18 @@ local function tryDigDown()
 end
 
 local function tryPlace()
-    while !turtle.detect() do
-        if !turtle.place() then
-            return false
-        end
-    end
-    return true
+    trySelectMaterial()
+    return turtle.place()
 end
 
 local function tryPlaceUp()
-    while !turtle.detectUp() do
-        if !turtle.placeUp() then
-            return false
-        end
-    end
-    return true
+    trySelectMaterial()
+    return turtle.placeUp()
 end
 
 local function tryPlaceDown()
-    while !turtle.detectDown() do
-        if !turtle.placeDown() then
-            return false
-        end
-    end
-    return true
+    trySelectMaterial()
+    return turtle.placeDown()
 end
 
 local function refuel()
@@ -199,15 +210,16 @@ local function tryPlaceShields()
     turtle.turnLeft()
     tryPlace()
     turtle.turnRight()
-  else if x == width then
+  end
+  if x == width then
     turtle.turnRight()
-    truPlace()
+    tryPlace()
     turtle.turnLeft()
   end
 
   if y == 1 then
     tryPlaceDown()
-  else if y == height then
+  elseif y == height then
     tryPlaceUp()
   end
 end
@@ -219,7 +231,7 @@ local function tryMoveNextCell()
     tryForward()
     turtle.turnLeft()
     x = x + 1
-  else if baseX == width then
+  elseif baseX == width then
     turtle.turnLeft()
     tryForward()
     turtle.turnRight()
@@ -233,7 +245,7 @@ local function tryMoveNextRow()
   if baseY == 1 then
     tryUp()
     y = y + 1
-  else if baseY == height then
+  elseif baseY == height then
     tryDown()
     y = y - 1
   else
@@ -249,7 +261,7 @@ local function tryMoveNext()
     z = z + 1
     baseX = x
     baseY = y
-  else if j % width == 0 then
+  elseif j % width == 0 then
     tryMoveNextRow()
     baseX = x
   else
