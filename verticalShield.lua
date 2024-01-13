@@ -6,7 +6,7 @@ end
 local tArgs = { ... }
 if #tArgs < 3  or #tArgs > 4 then
     local programName = arg[0] or fs.getName(shell.getRunningProgram())
-    print("Usage: " .. programName .. " <material> <width> <height> [<length>]")
+    print("Usage: " .. programName .. " <material> <width> <depth> [<height>]")
     return
 end
 
@@ -40,16 +40,16 @@ if width < 1 then
     return
 end
 
-local height = tonumber(tArgs[3])
-if height < 1 then
-    print("Tunnel height must be positive")
+local depth = tonumber(tArgs[3])
+if depth < 1 then
+    print("Tunnel depth must be positive")
     return
 end
-local length = 128;
+local height = 128;
 if #tArgs == 4 then
-    length = tonumber(tArgs[4])
-    if length < 1 then
-        print("Tunnel length must be positive")
+    height = tonumber(tArgs[4])
+    if height == 0 then
+        print("Tunnel height must not be zero")
         return
     end
 end
@@ -218,9 +218,14 @@ local function tryPlaceShields()
   end
 
   if y == 1 then
-    tryPlaceDown()
-  elseif y == height then
-    tryPlaceUp()
+    tryPlace()
+  end
+  if y == depth then
+    turtle.turnRight()
+    turtle.turnRight()
+    tryPlace()
+    turtle.turnRight()
+    turtle.turnRight()
   end
 end
 
@@ -243,24 +248,37 @@ end
 
 local function tryMoveNextRow()
   if baseY == 1 then
-    tryUp()
+    tryForward()
     y = y + 1
-  elseif baseY == height then
-    tryDown()
+  elseif baseY == depth then
+    turtle.turnRight()
+    turtle.turnRight()
+    tryForward()
+    turtle.turnRight()
+    turtle.turnRight()
     y = y - 1
   else
     print("Error wrong baseY")
   end
 end
 
+local function tryMoveNextLayer()
+    if z < math.abs(height) then
+        if endheight > 0 then
+            tryUp()
+        elseif height < 0 then
+            tryDown()
+        end
+        z = z + 1
+        baseX = x
+        baseY = y
+    end
+end
 
 local function tryMoveNext()
-  local j = i % (width * height)
+  local j = i % (width * depth)
   if j == 0 then
-    tryForward()
-    z = z + 1
-    baseX = x
-    baseY = y
+    tryMoveNextLayer()
   elseif j % width == 0 then
     tryMoveNextRow()
     baseX = x
@@ -269,7 +287,7 @@ local function tryMoveNext()
   end
 end
 
-while z < length do
+while z <= math.abs(height) do
   tryPlaceShields()
   tryMoveNext()
   i = i + 1
